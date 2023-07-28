@@ -6,4 +6,5 @@ const {BookingMiddlewares} = require('../../middlewares')
 router.post('/',
                  BookingMiddlewares.validateCreateRequest,BookingController.createBooking);
 
+router.post('/payments',BookingController.makePayment);                 
 module.exports=router;

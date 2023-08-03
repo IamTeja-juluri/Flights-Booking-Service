@@ -29,9 +29,8 @@ async function createBooking(req,res){
 async function makePayment(req,res){
     try{
         console.log("req.headers=",req.headers);
-        const idempotencyKey = req.headers['x-idempotency-key'];
-        console.log(idempotencyKey);
-
+        const idempotencyKey = req.headers["x-idempotency-key"];
+        console.log("idempotencyKey=",idempotencyKey);
         if(!idempotencyKey){
             return res
             .status(StatusCodes.BAD_REQUEST)
@@ -53,7 +52,7 @@ async function makePayment(req,res){
                   .status(StatusCodes.OK)
                   .json(SuccessResponse);
     }catch(error){
-        console.log("controller catching");
+        console.log("controller catching",error);
         ErrorResponse.error=error;
         return res
                   .status(StatusCodes.INTERNAL_SERVER_ERROR)

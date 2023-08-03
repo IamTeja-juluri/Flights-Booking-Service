@@ -2,10 +2,13 @@ const axios = require('axios');
 const {StatusCodes}=require('http-status-codes');
 
 const { BookingRepository } = require('../repositories');
-const { ServerConfig }=require('../config');
+const { ServerConfig,Queue }=require('../config');
 const db = require('../models');
 const AppError=require('../utils/errors/app-error');
 const { data } = require('../utils/common/error-response');
+const { Enums } = require('../utils/common/');
+const {BOOKED,CANCELLED,PENDING,INITIATED} = Enums.BOOKING_STATUS
+
 const bookingRepository= new BookingRepository();
 
 async function createBooking(data){
@@ -19,7 +22,7 @@ async function createBooking(data){
         if(data.noOfSeats > flightData.totalSeats){
            throw new AppError('Not enough seats available',StatusCodes.BAD_REQUEST);
         }
-        console.log(data)
+        console.log(data);
         const totalBillingAmount = data.noOfSeats * flightData.price;
         const bookingPayload = { ...data , totalCost: totalBillingAmount};
         const booking = await bookingRepository.create(bookingPayload,transaction);
@@ -29,6 +32,7 @@ async function createBooking(data){
         });
 
         await transaction.commit();
+    
         return booking;
 
     }catch(error){
@@ -66,7 +70,13 @@ async function makePayment(data){
         }
         // we assume here that payment is successful
         const response = await bookingRepository.update(data.bookingId,{status:BOOKED},transaction);
+        Queue.sendData({
+            recepientEmail:'tejajuluri2605@gmail.com',
+            subject:'Flight Booked',
+            text:`Booking successfully done for the flight ${data.bookingId}`
+        })
         await transaction.commit();
+        
     } catch(error){
         await transaction.rollback();
         throw error;
